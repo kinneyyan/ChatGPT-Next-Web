@@ -166,6 +166,9 @@ const cn = {
       IsChecking: "正在检查更新...",
       FoundUpdate: (x: string) => `发现新版本：${x}`,
       GoToUpdate: "前往更新",
+      AzureSupportVersionTip:
+        "此版本基于 Yidadaa/ChatGPT-Next-Web 项目，加入了 Azure Open AI 的支持",
+      GotoRawVersion: "查看原版",
     },
     SendKey: "发送键",
     Theme: "主题",
@@ -218,6 +221,22 @@ const cn = {
       Title: "API Key",
       SubTitle: "使用自己的 Key 可绕过密码访问限制",
       Placeholder: "OpenAI API Key",
+    },
+    AzureToken: {
+      Title: "Azure Open AI API Key",
+      Placeholder: "Azure OpenAI API Key",
+    },
+    AzureEndpoint: {
+      Title: "Azure Open AI API ENDPOINT",
+      Placeholder: "Azure Open AI API ENDPOINT",
+    },
+    AzureDeploymentID: {
+      Title: "Azure Deployment ID",
+      Placeholder: "Azure Deployment ID",
+    },
+    AzureAPIVersion: {
+      Title: "Azure Open AI API Version",
+      Placeholder: "Azure Open AI API Version",
     },
 
     Usage: {

@@ -39,7 +39,8 @@ export const DEFAULT_CONFIG = {
   models: DEFAULT_MODELS as any as LLMModel[],
 
   modelConfig: {
-    model: "gpt-3.5-turbo" as ModelType,
+    // model: "gpt-3.5-turbo" as ModelType,
+    model: "gpt-4" as ModelType,
     temperature: 0.5,
     top_p: 1,
     max_tokens: 2000,
@@ -148,7 +149,7 @@ export const useAppConfig = create<ChatConfigStore>()(
     }),
     {
       name: StoreKey.Config,
-      version: 3.7,
+      version: 3.8,
       migrate(persistedState, version) {
         const state = persistedState as ChatConfig;
 
@@ -173,6 +174,10 @@ export const useAppConfig = create<ChatConfigStore>()(
 
         if (version < 3.7) {
           state.enableAutoGenerateTitle = true;
+        }
+
+        if (version < 3.8) {
+          state.modelConfig.model = "gpt-4";
         }
 
         return state as any;

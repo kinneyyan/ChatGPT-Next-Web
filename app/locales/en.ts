@@ -168,6 +168,9 @@ const en: LocaleType = {
       IsChecking: "Checking update...",
       FoundUpdate: (x: string) => `Found new version: ${x}`,
       GoToUpdate: "Update",
+      AzureSupportVersionTip:
+        "This version is based on the Yidadaa/ChatGPT-Next-Web project, adding support for Azure Open AI",
+      GotoRawVersion: "Check raw version",
     },
     SendKey: "Send Key",
     Theme: "Theme",
@@ -221,6 +224,22 @@ const en: LocaleType = {
       Title: "API Key",
       SubTitle: "Use your key to ignore access code limit",
       Placeholder: "OpenAI API Key",
+    },
+    AzureToken: {
+      Title: "Azure Open AI API Key",
+      Placeholder: "Azure OpenAI API Key",
+    },
+    AzureEndpoint: {
+      Title: "Azure Open AI API ENDPOINT",
+      Placeholder: "Azure Open AI API ENDPOINT",
+    },
+    AzureDeploymentID: {
+      Title: "Azure Deployment ID",
+      Placeholder: "Azure Deployment ID",
+    },
+    AzureAPIVersion: {
+      Title: "Azure Open AI API Version",
+      Placeholder: "Azure Open AI API Version",
     },
     Usage: {
       Title: "Account Balance",

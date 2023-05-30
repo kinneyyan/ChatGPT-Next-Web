@@ -1,9 +1,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DEFAULT_API_HOST, DEFAULT_MODELS, StoreKey } from "../constant";
 import { getHeaders } from "../client/api";
-import { BOT_HELLO } from "./chat";
 import { getClientConfig } from "../config/client";
+import { DEFAULT_API_HOST, DEFAULT_MODELS, StoreKey } from "../constant";
+
+interface IAzureConfig {
+  apiKey: string;
+  deploymentID: string;
+  endpoint: string;
+  apiVersion: string;
+}
 
 export interface AccessControlStore {
   accessCode: string;
@@ -22,6 +28,12 @@ export interface AccessControlStore {
   enabledAccessControl: () => boolean;
   isAuthorized: () => boolean;
   fetch: () => void;
+
+  // the following is added by kinney
+  azureConfig: Partial<IAzureConfig>;
+  loginToken: string;
+  updateAzureConfig: (config: Partial<IAzureConfig>) => void;
+  updateLoginToken: (token: string) => void;
 }
 
 let fetchState = 0; // 0 not fetch, 1 fetching, 2 done
@@ -61,7 +73,8 @@ export const useAccessStore = create<AccessControlStore>()(
 
         // has token or has code or disabled access control
         return (
-          !!get().token || !!get().accessCode || !get().enabledAccessControl()
+          // !!get().token || !!get().accessCode || !get().enabledAccessControl()
+          !!get().token || !!get().azureConfig.apiKey || !!get().accessCode
         );
       },
       fetch() {
@@ -92,10 +105,37 @@ export const useAccessStore = create<AccessControlStore>()(
             fetchState = 2;
           });
       },
+
+      // the following is added by kinney
+      azureConfig: {
+        apiKey: process.env.NEXT_PUBLIC_AZURE_OPENAI_API_KEY,
+        deploymentID: process.env.NEXT_PUBLIC_AZURE_DEPLOYMENT_ID,
+        endpoint: process.env.NEXT_PUBLIC_AZURE_OPENAI_API_ENDPOINT,
+        apiVersion: process.env.NEXT_PUBLIC_AZURE_OPENAI_API_VERSION,
+      },
+      loginToken: "",
+      updateAzureConfig(config) {
+        set((state) => ({ azureConfig: { ...state.azureConfig, ...config } }));
+      },
+      updateLoginToken(token: string) {
+        set(() => ({ loginToken: token }));
+      },
     }),
     {
       name: StoreKey.Access,
-      version: 1,
+      version: 1.1,
+      migrate(persistedState, version) {
+        const state = persistedState as AccessControlStore;
+        if (version < 1.1) {
+          state.azureConfig = {
+            apiKey: process.env.NEXT_PUBLIC_AZURE_OPENAI_API_KEY,
+            deploymentID: process.env.NEXT_PUBLIC_AZURE_DEPLOYMENT_ID,
+            endpoint: process.env.NEXT_PUBLIC_AZURE_OPENAI_API_ENDPOINT,
+            apiVersion: process.env.NEXT_PUBLIC_AZURE_OPENAI_API_VERSION,
+          };
+        }
+        return state as any;
+      },
     },
   ),
 );

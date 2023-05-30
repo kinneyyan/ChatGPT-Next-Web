@@ -48,5 +48,6 @@ export const getServerSideConfig = () => {
     hideUserApiKey: !!process.env.HIDE_USER_API_KEY,
     disableGPT4: !!process.env.DISABLE_GPT4,
     hideBalanceQuery: !!process.env.HIDE_BALANCE_QUERY,
+    loginBaseUrl: "https://api-dingtalk-dev.ab-inbev.cn",
   };
 };

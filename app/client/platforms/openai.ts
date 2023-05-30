@@ -6,14 +6,25 @@ import {
 } from "@/app/constant";
 import { useAccessStore, useAppConfig, useChatStore } from "@/app/store";
 
-import { ChatOptions, getHeaders, LLMApi, LLMModel, LLMUsage } from "../api";
-import Locale from "../../locales";
+import { getClientConfig } from "@/app/config/client";
+import { prettyObject } from "@/app/utils/format";
 import {
   EventStreamContentType,
   fetchEventSource,
 } from "@fortaine/fetch-event-source";
-import { prettyObject } from "@/app/utils/format";
-import { getClientConfig } from "@/app/config/client";
+import Locale from "../../locales";
+import { ChatOptions, LLMApi, LLMModel, LLMUsage, getHeaders } from "../api";
+
+function isObjEmpty(obj: Record<string, any>): boolean {
+  const keys = Object.keys(obj);
+  for (const key of keys) {
+    const value = obj[key];
+    if (value === undefined || value === null || value === "") {
+      return true;
+    }
+  }
+  return false;
+}
 
 export interface OpenAIListModelResponse {
   object: string;
@@ -40,6 +51,17 @@ export class ChatGPTApi implements LLMApi {
     }
     if (!openaiUrl.startsWith("http") && !openaiUrl.startsWith(apiPath)) {
       openaiUrl = "https://" + openaiUrl;
+    }
+
+    const { token: openaiAPIKey, azureConfig } = useAccessStore.getState();
+    // 若未设置 openAI 的 API key 且 azure open ai 的配置不为空
+    if (
+      !openaiAPIKey &&
+      !isObjEmpty(azureConfig) &&
+      // /api/openai/v1/chat/completions
+      path.includes(OpenaiPath.ChatPath)
+    ) {
+      return "/api/azure";
     }
     return [openaiUrl, path].join("/");
   }

@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { FETCH_COMMIT_URL, FETCH_TAG_URL, StoreKey } from "../constant";
 import { api } from "../client/api";
 import { getClientConfig } from "../config/client";
+import { FETCH_COMMIT_URL, FETCH_TAG_URL, StoreKey } from "../constant";
 
 export interface UpdateStore {
   versionType: "date" | "tag";
@@ -60,7 +60,7 @@ export const useUpdateStore = create<UpdateStore>()(
     (set, get) => ({
       versionType: "tag",
       lastUpdate: 0,
-      version: "unknown",
+      version: "BudTech",
       remoteVersion: "",
 
       lastUpdateUsage: 0,

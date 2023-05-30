@@ -1,15 +1,15 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import styles from "./settings.module.scss";
 
-import ResetIcon from "../icons/reload.svg";
 import AddIcon from "../icons/add.svg";
+import ClearIcon from "../icons/clear.svg";
 import CloseIcon from "../icons/close.svg";
 import CopyIcon from "../icons/copy.svg";
-import ClearIcon from "../icons/clear.svg";
-import LoadingIcon from "../icons/three-dots.svg";
 import EditIcon from "../icons/edit.svg";
 import EyeIcon from "../icons/eye.svg";
+import ResetIcon from "../icons/reload.svg";
+import { ModelConfigList } from "./model-config";
 import {
   Input,
   List,
@@ -20,35 +20,34 @@ import {
   Select,
   showConfirm,
 } from "./ui-lib";
-import { ModelConfigList } from "./model-config";
 
-import { IconButton } from "./button";
 import {
   SubmitKey,
-  useChatStore,
   Theme,
-  useUpdateStore,
   useAccessStore,
   useAppConfig,
+  useChatStore,
+  useUpdateStore,
 } from "../store";
+import { IconButton } from "./button";
 
+import { nanoid } from "nanoid";
+import Link from "next/link";
+import { useNavigate } from "react-router-dom";
+import { getClientConfig } from "../config/client";
+import { Path, UPDATE_URL } from "../constant";
 import Locale, {
-  AllLangs,
   ALL_LANG_OPTIONS,
+  AllLangs,
   changeLang,
   getLang,
 } from "../locales";
-import { copyToClipboard } from "../utils";
-import Link from "next/link";
-import { Path, RELEASE_URL, UPDATE_URL } from "../constant";
 import { Prompt, SearchService, usePromptStore } from "../store/prompt";
+import { useSyncStore } from "../store/sync";
+import { copyToClipboard } from "../utils";
+import { Avatar, AvatarPicker } from "./emoji";
 import { ErrorBoundary } from "./error";
 import { InputRange } from "./input-range";
-import { useNavigate } from "react-router-dom";
-import { Avatar, AvatarPicker } from "./emoji";
-import { getClientConfig } from "../config/client";
-import { useSyncStore } from "../store/sync";
-import { nanoid } from "nanoid";
 
 function EditPromptModal(props: { id: string; onClose: () => void }) {
   const promptStore = usePromptStore();
@@ -320,21 +319,21 @@ export function Settings() {
   const updateConfig = config.update;
 
   const updateStore = useUpdateStore();
-  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  // const [checkingUpdate, setCheckingUpdate] = useState(false);
   const currentVersion = updateStore.formatVersion(updateStore.version);
-  const remoteId = updateStore.formatVersion(updateStore.remoteVersion);
-  const hasNewVersion = currentVersion !== remoteId;
-  const updateUrl = getClientConfig()?.isApp ? RELEASE_URL : UPDATE_URL;
+  // const remoteId = updateStore.formatVersion(updateStore.remoteVersion);
+  // const hasNewVersion = currentVersion !== remoteId;
+  // const updateUrl = getClientConfig()?.isApp ? RELEASE_URL : UPDATE_URL;
 
-  function checkUpdate(force = false) {
-    setCheckingUpdate(true);
-    updateStore.getLatestVersion(force).then(() => {
-      setCheckingUpdate(false);
-    });
+  // function checkUpdate(force = false) {
+  //   setCheckingUpdate(true);
+  //   updateStore.getLatestVersion(force).then(() => {
+  //     setCheckingUpdate(false);
+  //   });
 
-    console.log("[Update] local version ", updateStore.version);
-    console.log("[Update] remote version ", updateStore.remoteVersion);
-  }
+  // console.log("[Update] local version ", updateStore.version);
+  // console.log("[Update] remote version ", updateStore.remoteVersion);
+  // }
 
   const usage = {
     used: updateStore.used,
@@ -364,10 +363,11 @@ export function Settings() {
   const customCount = promptStore.getUserPrompts().length ?? 0;
   const [shouldShowPromptModal, setShowPromptModal] = useState(false);
 
-  const showUsage = accessStore.isAuthorized();
+  // const showUsage = accessStore.isAuthorized();
+  const showUsage = !!accessStore.token;
   useEffect(() => {
     // checks per minutes
-    checkUpdate();
+    // checkUpdate();
     showUsage && checkUsage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -437,27 +437,11 @@ export function Settings() {
 
           <ListItem
             title={Locale.Settings.Update.Version(currentVersion ?? "unknown")}
-            subTitle={
-              checkingUpdate
-                ? Locale.Settings.Update.IsChecking
-                : hasNewVersion
-                ? Locale.Settings.Update.FoundUpdate(remoteId ?? "ERROR")
-                : Locale.Settings.Update.IsLatest
-            }
+            subTitle={Locale.Settings.Update.AzureSupportVersionTip}
           >
-            {checkingUpdate ? (
-              <LoadingIcon />
-            ) : hasNewVersion ? (
-              <Link href={updateUrl} target="_blank" className="link">
-                {Locale.Settings.Update.GoToUpdate}
-              </Link>
-            ) : (
-              <IconButton
-                icon={<ResetIcon></ResetIcon>}
-                text={Locale.Settings.Update.CheckUpdate}
-                onClick={() => checkUpdate(true)}
-              />
-            )}
+            <Link href={UPDATE_URL} target="_blank" className="link">
+              {Locale.Settings.Update.GotoRawVersion}
+            </Link>
           </ListItem>
 
           <ListItem title={Locale.Settings.SendKey}>
@@ -625,6 +609,57 @@ export function Settings() {
               icon={<EditIcon />}
               text={Locale.Settings.Prompt.Edit}
               onClick={() => setShowPromptModal(true)}
+            />
+          </ListItem>
+        </List>
+
+        <List>
+          <ListItem title={Locale.Settings.AzureToken.Title}>
+            <PasswordInput
+              value={accessStore.azureConfig.apiKey}
+              type="text"
+              placeholder={Locale.Settings.AzureToken.Placeholder}
+              onChange={(e) => {
+                accessStore.updateAzureConfig({
+                  apiKey: e.currentTarget.value,
+                });
+              }}
+            />
+          </ListItem>
+          <ListItem title={Locale.Settings.AzureDeploymentID.Title}>
+            <Input
+              value={accessStore.azureConfig.deploymentID}
+              type="text"
+              placeholder={Locale.Settings.AzureDeploymentID.Placeholder}
+              onChange={(e) => {
+                accessStore.updateAzureConfig({
+                  deploymentID: e.currentTarget.value,
+                });
+              }}
+            />
+          </ListItem>
+          <ListItem title={Locale.Settings.AzureEndpoint.Title}>
+            <Input
+              value={accessStore.azureConfig.endpoint}
+              type="text"
+              placeholder={Locale.Settings.AzureEndpoint.Placeholder}
+              onChange={(e) => {
+                accessStore.updateAzureConfig({
+                  endpoint: e.currentTarget.value,
+                });
+              }}
+            />
+          </ListItem>
+          <ListItem title={Locale.Settings.AzureAPIVersion.Title}>
+            <Input
+              value={accessStore.azureConfig.apiVersion}
+              type="text"
+              placeholder={Locale.Settings.AzureAPIVersion.Placeholder}
+              onChange={(e) => {
+                accessStore.updateAzureConfig({
+                  apiVersion: e.currentTarget.value,
+                });
+              }}
             />
           </ListItem>
         </List>
