@@ -126,7 +126,7 @@ function Screen() {
   const isHome = location.pathname === Path.Home;
   const isAuth = location.pathname === Path.Auth;
   const isMobileScreen = useMobileScreen();
-  const needLogin = !useAccessStore().loginToken;
+  const needLogin = !useAccessStore().isLoginTokenValid();
 
   useEffect(() => {
     // loadAsyncGoogleFont();

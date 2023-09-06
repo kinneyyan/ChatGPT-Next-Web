@@ -4,7 +4,19 @@ import { getHeaders } from "../client/api";
 import { getClientConfig } from "../config/client";
 import { DEFAULT_API_HOST, DEFAULT_MODELS, StoreKey } from "../constant";
 
-interface IAzureConfig {
+/**
+ * token过期时间：5天。单位：ms
+ */
+const TOKEN_EXPIRES = 5 * 24 * 60 * 60 * 1000;
+
+interface ILoginToken {
+  /** token值 */
+  value: string;
+  /** 存到localStorage时的时间戳  */
+  timestamp: number;
+}
+
+export interface IAzureConfig {
   apiKey: string;
   deploymentID: string;
   endpoint: string;
@@ -31,7 +43,8 @@ export interface AccessControlStore {
 
   // the following is added by kinney
   azureConfig: Partial<IAzureConfig>;
-  loginToken: string;
+  loginToken?: ILoginToken;
+  isLoginTokenValid: () => boolean;
   updateAzureConfig: (config: Partial<IAzureConfig>) => void;
   updateLoginToken: (token: string) => void;
 }
@@ -113,12 +126,19 @@ export const useAccessStore = create<AccessControlStore>()(
         endpoint: process.env.NEXT_PUBLIC_AZURE_OPENAI_API_ENDPOINT,
         apiVersion: process.env.NEXT_PUBLIC_AZURE_OPENAI_API_VERSION,
       },
-      loginToken: "",
+      isLoginTokenValid() {
+        const loginToken = get().loginToken;
+        const { value, timestamp } = loginToken || {};
+        if (!value || !timestamp) {
+          return false;
+        }
+        return !(Date.now() - timestamp >= TOKEN_EXPIRES);
+      },
       updateAzureConfig(config) {
         set((state) => ({ azureConfig: { ...state.azureConfig, ...config } }));
       },
       updateLoginToken(token: string) {
-        set(() => ({ loginToken: token }));
+        set(() => ({ loginToken: { value: token, timestamp: Date.now() } }));
       },
     }),
     {

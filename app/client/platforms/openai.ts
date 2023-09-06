@@ -4,7 +4,12 @@ import {
   OpenaiPath,
   REQUEST_TIMEOUT_MS,
 } from "@/app/constant";
-import { useAccessStore, useAppConfig, useChatStore } from "@/app/store";
+import {
+  IAzureConfig,
+  useAccessStore,
+  useAppConfig,
+  useChatStore,
+} from "@/app/store";
 
 import { getClientConfig } from "@/app/config/client";
 import { prettyObject } from "@/app/utils/format";
@@ -35,6 +40,20 @@ export interface OpenAIListModelResponse {
   }>;
 }
 
+/**
+ * 若未设置 openAI 的 API key 且 azure open ai 的配置不为空。则表示使用 Azure open ai
+ * @param path
+ * @returns
+ */
+function azureOpenAIActive(path: string) {
+  const { token: openaiAPIKey, azureConfig } = useAccessStore.getState();
+  return (
+    !openaiAPIKey &&
+    !isObjEmpty(azureConfig) &&
+    path.includes(OpenaiPath.ChatPath)
+  );
+}
+
 export class ChatGPTApi implements LLMApi {
   private disableListModels = true;
 
@@ -53,14 +72,7 @@ export class ChatGPTApi implements LLMApi {
       openaiUrl = "https://" + openaiUrl;
     }
 
-    const { token: openaiAPIKey, azureConfig } = useAccessStore.getState();
-    // 若未设置 openAI 的 API key 且 azure open ai 的配置不为空
-    if (
-      !openaiAPIKey &&
-      !isObjEmpty(azureConfig) &&
-      // /api/openai/v1/chat/completions
-      path.includes(OpenaiPath.ChatPath)
-    ) {
+    if (azureOpenAIActive(path)) {
       return "/api/azure";
     }
     return [openaiUrl, path].join("/");
@@ -102,11 +114,24 @@ export class ChatGPTApi implements LLMApi {
 
     try {
       const chatPath = this.path(OpenaiPath.ChatPath);
+      const headers: Record<string, string> = getHeaders();
+      if (azureOpenAIActive(OpenaiPath.ChatPath)) {
+        const { azureConfig } = useAccessStore.getState();
+        if (!isObjEmpty(azureConfig)) {
+          const { apiKey, deploymentID, endpoint, apiVersion } =
+            azureConfig as IAzureConfig;
+          headers.apiKey = apiKey;
+          headers.deploymentID = deploymentID;
+          headers.endpoint = endpoint;
+          headers.apiVersion = apiVersion;
+        }
+      }
       const chatPayload = {
         method: "POST",
         body: JSON.stringify(requestPayload),
         signal: controller.signal,
-        headers: getHeaders(),
+        // headers: getHeaders(),
+        headers,
       };
 
       // make a fetch request

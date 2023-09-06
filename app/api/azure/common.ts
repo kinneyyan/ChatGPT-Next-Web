@@ -3,20 +3,22 @@ import { NextRequest, NextResponse } from "next/server";
 const AZURE_OPENAI_URL = "https://apac-budtech-test-openai.openai.azure.com";
 const DEFAULT_PROTOCOL = "https";
 const PROTOCOL = process.env.PROTOCOL || DEFAULT_PROTOCOL;
-const BASE_URL = process.env.AZURE_OPENAI_API_ENDPOINT || AZURE_OPENAI_URL;
-const DEPLOYMENT_ID = process.env.AZURE_DEPLOYMENT_ID;
-const API_VERSION = process.env.AZURE_OPENAI_API_VERSION;
 const DISABLE_GPT4 = !!process.env.DISABLE_GPT4;
 
 export async function requestOpenai(req: NextRequest) {
   const controller = new AbortController();
   const authValue = req.headers.get("Authorization") ?? "";
+  const apiKey = req.headers.get("apiKey");
+  const deploymentID = req.headers.get("deploymentID");
+  const endpoint = req.headers.get("endpoint");
+  const apiVersion = req.headers.get("apiVersion");
+
   // const openaiPath = `${req.nextUrl.pathname}${req.nextUrl.search}`.replaceAll(
   //   "/api/openai/",
   //   "",
   // );
 
-  let baseUrl = BASE_URL;
+  let baseUrl = endpoint || AZURE_OPENAI_URL;
 
   if (!baseUrl.startsWith("http")) {
     baseUrl = `${PROTOCOL}://${baseUrl}`;
@@ -27,7 +29,7 @@ export async function requestOpenai(req: NextRequest) {
   }
 
   // console.log("[Proxy] ", openaiPath);
-  console.log("[Base Url]", baseUrl);
+  // console.log("[Base Url]", baseUrl);
 
   if (process.env.OPENAI_ORG_ID) {
     console.log("[Org ID]", process.env.OPENAI_ORG_ID);
@@ -40,7 +42,8 @@ export async function requestOpenai(req: NextRequest) {
     10 * 60 * 1000,
   );
 
-  const fetchUrl = `${baseUrl}/openai/deployments/${DEPLOYMENT_ID}/chat/completions?api-version=${API_VERSION}`;
+  const fetchUrl = `${baseUrl}/openai/deployments/${deploymentID}/chat/completions?api-version=${apiVersion}`;
+  console.log("[fetch Url] ", fetchUrl);
   const fetchOptions: RequestInit = {
     headers: {
       "Content-Type": "application/json",
@@ -49,7 +52,7 @@ export async function requestOpenai(req: NextRequest) {
       ...(process.env.OPENAI_ORG_ID && {
         "OpenAI-Organization": process.env.OPENAI_ORG_ID,
       }),
-      "api-key": process.env.AZURE_OPENAI_API_KEY || "",
+      "api-key": apiKey || "",
     },
     method: req.method,
     body: req.body,
