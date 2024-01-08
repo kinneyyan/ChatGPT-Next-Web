@@ -1,13 +1,23 @@
+import { getHeaders } from "../client/api";
+import { getClientConfig } from "../config/client";
 import {
   ApiPath,
   DEFAULT_API_HOST,
   ServiceProvider,
   StoreKey,
 } from "../constant";
-import { getHeaders } from "../client/api";
-import { getClientConfig } from "../config/client";
-import { createPersistStore } from "../utils/store";
 import { ensure } from "../utils/clone";
+import { createPersistStore } from "../utils/store";
+
+/** token过期时间：5天。单位：ms */
+const LOGIN_TOKEN_EXPIRES = 5 * 24 * 60 * 60 * 1000;
+
+interface ILoginToken {
+  /** token值 */
+  value: string;
+  /** 存到localStorage时的时间戳  */
+  timestamp: number;
+}
 
 let fetchState = 0; // 0 not fetch, 1 fetching, 2 done
 
@@ -16,7 +26,7 @@ const DEFAULT_OPENAI_URL =
     ? DEFAULT_API_HOST + "/api/proxy/openai"
     : ApiPath.OpenAI;
 
-const DEFAULT_ACCESS_STATE = {
+const DEFAULT_ACCESS_STATE: { loginToken?: ILoginToken; [key: string]: any } = {
   accessCode: "",
   useCustomConfig: false,
 
@@ -43,6 +53,11 @@ const DEFAULT_ACCESS_STATE = {
   disableGPT4: false,
   disableFastLink: false,
   customModels: "",
+
+  /**
+   * NOTE: the following is added by kinney
+   */
+  loginToken: undefined,
 };
 
 export const useAccessStore = createPersistStore(
@@ -100,6 +115,17 @@ export const useAccessStore = createPersistStore(
         .finally(() => {
           fetchState = 2;
         });
+    },
+    isLoginTokenValid() {
+      const loginToken = get().loginToken;
+      const { value, timestamp } = loginToken || {};
+      if (!value || !timestamp) {
+        return false;
+      }
+      return !(Date.now() - timestamp >= LOGIN_TOKEN_EXPIRES);
+    },
+    updateLoginToken(token: string) {
+      set(() => ({ loginToken: { value: token, timestamp: Date.now() } }));
     },
   }),
   {

@@ -1,5 +1,4 @@
 import { LLMModel } from "../client/api";
-import { isMacOS } from "../utils";
 import { getClientConfig } from "../config/client";
 import {
   DEFAULT_INPUT_TEMPLATE,
@@ -7,6 +6,7 @@ import {
   DEFAULT_SIDEBAR_WIDTH,
   StoreKey,
 } from "../constant";
+import { isMacOS } from "../utils";
 import { createPersistStore } from "../utils/store";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
@@ -42,11 +42,11 @@ export const DEFAULT_CONFIG = {
   dontShowMaskSplashScreen: false, // dont show splash screen when create chat
   hideBuiltinMasks: false, // dont add builtin masks
 
-  customModels: "",
+  customModels: "GPT4turbo",
   models: DEFAULT_MODELS as any as LLMModel[],
 
   modelConfig: {
-    model: "gpt-3.5-turbo" as ModelType,
+    model: "GPT4turbo" as ModelType,
     temperature: 0.5,
     top_p: 1,
     max_tokens: 4000,
