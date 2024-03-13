@@ -10,7 +10,7 @@ import { showToast } from "../ui-lib";
 import styles from "./index.module.scss";
 
 interface IAccountInfo {
-  account: string;
+  username: string;
   password: string;
 }
 
@@ -18,19 +18,19 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { updateLoginToken } = useAccessStore.getState();
   const [accountInfo, setAccountInfo] = useState<IAccountInfo>({
-    account: "",
+    username: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
 
-  const btnDisabled = !accountInfo?.account || !accountInfo?.password;
+  const btnDisabled = !accountInfo?.username || !accountInfo?.password;
 
   const goHome = () => navigate(Path.Home);
 
   const handleOnLogin = async () => {
     setLoading(true);
     const res = await fetch(
-      "https://api-dingtalk-dev.ab-inbev.cn/api/user/login",
+      "https://api-fe-tool-dev.ab-inbev.cn/api/v1/auth/login",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -44,7 +44,7 @@ export function LoginPage() {
       .catch(() => null);
     setLoading(false);
     if (res?.code === 200 && res?.data) {
-      updateLoginToken(res.data.tokenValue);
+      updateLoginToken(res.data.accessToken);
       goHome();
     } else {
       showToast(res?.message || "登录失败");
@@ -77,7 +77,7 @@ export function LoginPage() {
         placeholder="请输入账号"
         onKeyDown={handleOnKeyDown}
         onChange={(e) => {
-          setAccountInfo((pre) => ({ ...pre, account: e.target.value }));
+          setAccountInfo((pre) => ({ ...pre, username: e.target.value }));
         }}
       />
       <input
