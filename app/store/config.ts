@@ -6,7 +6,6 @@ import {
   DEFAULT_SIDEBAR_WIDTH,
   StoreKey,
 } from "../constant";
-import { isMacOS } from "../utils";
 import { createPersistStore } from "../utils/store";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
@@ -25,6 +24,8 @@ export enum Theme {
   Light = "light",
 }
 
+export const budtechModel = "gpt4o";
+
 export const DEFAULT_CONFIG = {
   lastUpdate: Date.now(), // timestamp, to merge state
 
@@ -42,11 +43,11 @@ export const DEFAULT_CONFIG = {
   dontShowMaskSplashScreen: false, // dont show splash screen when create chat
   hideBuiltinMasks: false, // dont add builtin masks
 
-  customModels: "GPT4turbo",
+  customModels: budtechModel,
   models: DEFAULT_MODELS as any as LLMModel[],
 
   modelConfig: {
-    model: "GPT4turbo" as ModelType,
+    model: budtechModel as ModelType,
     temperature: 0.5,
     top_p: 1,
     max_tokens: 4000,
@@ -132,7 +133,7 @@ export const useAppConfig = createPersistStore(
   }),
   {
     name: StoreKey.Config,
-    version: 3.8,
+    version: 3.9,
     migrate(persistedState, version) {
       const state = persistedState as ChatConfig;
 
@@ -161,6 +162,11 @@ export const useAppConfig = createPersistStore(
 
       if (version < 3.8) {
         state.lastUpdate = Date.now();
+      }
+
+      if (version < 3.9) {
+        state.customModels = budtechModel;
+        state.modelConfig.model = budtechModel as ModelType;
       }
 
       return state as any;

@@ -34,6 +34,9 @@ ENV PROXY_URL=""
 ENV OPENAI_API_KEY=""
 ENV GOOGLE_API_KEY=""
 ENV CODE=""
+ENV AZURE_URL=""
+ENV AZURE_API_KEY=""
+ENV AZURE_API_VERSION=""
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
@@ -42,6 +45,7 @@ COPY --from=builder /app/.next/server ./.next/server
 
 EXPOSE 3000
 
+RUN yarn global add pm2
 CMD if [ -n "$PROXY_URL" ]; then \
     export HOSTNAME="127.0.0.1"; \
     protocol=$(echo $PROXY_URL | cut -d: -f1); \
@@ -58,7 +62,7 @@ CMD if [ -n "$PROXY_URL" ]; then \
     echo "[ProxyList]" >> $conf; \
     echo "$protocol $host $port" >> $conf; \
     cat /etc/proxychains.conf; \
-    proxychains -f $conf node server.js; \
+    proxychains -f $conf pm2-runtime server.js --watch; \
     else \
-    node server.js; \
+    pm2-runtime server.js --watch; \
     fi
