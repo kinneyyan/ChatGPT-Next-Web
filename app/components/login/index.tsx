@@ -30,7 +30,7 @@ export function LoginPage() {
   const handleOnLogin = async () => {
     setLoading(true);
     const res = await fetch(
-      "https://api-fe-tool-dev.ab-inbev.cn/api/v1/auth/login",
+      "https://api-gateway-dev.ab-inbev.cn/budtech-fe-tool-server/api/v1/auth/login",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
